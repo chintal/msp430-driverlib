@@ -397,7 +397,7 @@ void Timer_B_setOutputMode(uint16_t baseAddress,
 {
     uint16_t temp = HWREG16(baseAddress + compareRegister);
     HWREG16(baseAddress +
-            compareRegister) = temp & ~(OUTMOD_7) | compareOutputMode;
+            compareRegister) = (temp & ~(OUTMOD_7)) | compareOutputMode;
 }
 
 #endif
