@@ -86,6 +86,8 @@ extern "C"
 #define GPIO_PORT_PF                                                         11
 #define GPIO_PORT_PJ                                                         13
 
+extern const uint16_t GPIO_PORT_TO_BASE[];
+    
 //*****************************************************************************
 //
 // The following are values that can be passed to the selectedPins parameter
@@ -434,8 +436,29 @@ extern void GPIO_setAsPeripheralModuleFunctionInputPin(uint8_t selectedPort,
 //! \return None
 //
 //*****************************************************************************
-extern void GPIO_setOutputHighOnPin(uint8_t selectedPort,
-                                    uint16_t selectedPins);
+static inline void GPIO_setOutputHighOnPin(uint8_t selectedPort,
+                                           uint16_t selectedPins);
+
+
+static inline void GPIO_setOutputHighOnPin(uint8_t selectedPort,
+                                           uint16_t selectedPins) {
+    uint16_t baseAddress = GPIO_PORT_TO_BASE[selectedPort];
+
+    #ifndef NDEBUG
+    if(baseAddress == 0xFFFF)
+    {
+        return;
+    }
+    #endif
+
+    // Shift by 8 if port is even (upper 8-bits)
+    if((selectedPort & 1) ^ 1)
+    {
+        selectedPins <<= 8;
+    }
+
+    HWREG16(baseAddress + OFS_PAOUT) |= selectedPins;
+}
 
 //*****************************************************************************
 //
@@ -489,8 +512,28 @@ extern void GPIO_setOutputHighOnPin(uint8_t selectedPort,
 //! \return None
 //
 //*****************************************************************************
-extern void GPIO_setOutputLowOnPin(uint8_t selectedPort,
-                                   uint16_t selectedPins);
+static inline void GPIO_setOutputLowOnPin(uint8_t selectedPort,
+                                          uint16_t selectedPins);
+
+static inline void GPIO_setOutputLowOnPin(uint8_t selectedPort,
+                                          uint16_t selectedPins) {
+    uint16_t baseAddress = GPIO_PORT_TO_BASE[selectedPort];
+
+    #ifndef NDEBUG
+    if(baseAddress == 0xFFFF)
+    {
+        return;
+    }
+    #endif
+
+    // Shift by 8 if port is even (upper 8-bits)
+    if((selectedPort & 1) ^ 1)
+    {
+        selectedPins <<= 8;
+    }
+
+    HWREG16(baseAddress + OFS_PAOUT) &= ~selectedPins;
+}
 
 //*****************************************************************************
 //
@@ -544,8 +587,28 @@ extern void GPIO_setOutputLowOnPin(uint8_t selectedPort,
 //! \return None
 //
 //*****************************************************************************
-extern void GPIO_toggleOutputOnPin(uint8_t selectedPort,
-                                   uint16_t selectedPins);
+static inline void GPIO_toggleOutputOnPin(uint8_t selectedPort,
+                                          uint16_t selectedPins);
+
+static inline void GPIO_toggleOutputOnPin(uint8_t selectedPort,
+                                          uint16_t selectedPins) {
+    uint16_t baseAddress = GPIO_PORT_TO_BASE[selectedPort];
+
+    #ifndef NDEBUG
+    if(baseAddress == 0xFFFF)
+    {
+        return;
+    }
+    #endif
+
+    // Shift by 8 if port is even (upper 8-bits)
+    if((selectedPort & 1) ^ 1)
+    {
+        selectedPins <<= 8;
+    }
+
+    HWREG16(baseAddress + OFS_PAOUT) ^= selectedPins;
+}
 
 //*****************************************************************************
 //
@@ -714,8 +777,34 @@ extern void GPIO_setAsInputPinWithPullUpResistor(uint8_t selectedPort,
 //!         \n indicating the status of the pin
 //
 //*****************************************************************************
-extern uint8_t GPIO_getInputPinValue(uint8_t selectedPort,
+static inline uint8_t GPIO_getInputPinValue(uint8_t selectedPort,
                                      uint16_t selectedPins);
+
+static inline uint8_t GPIO_getInputPinValue(uint8_t selectedPort,
+                              uint16_t selectedPins) {
+    uint16_t baseAddress = GPIO_PORT_TO_BASE[selectedPort];
+
+    #ifndef NDEBUG
+    if(baseAddress == 0xFFFF)
+    {
+        return;
+    }
+    #endif
+
+    // Shift by 8 if port is even (upper 8-bits)
+    if((selectedPort & 1) ^ 1)
+    {
+        selectedPins <<= 8;
+    }
+
+    uint16_t inputPinValue = HWREG16(baseAddress + OFS_PAIN) & (selectedPins);
+
+    if(inputPinValue > 0)
+    {
+        return (GPIO_INPUT_PIN_HIGH);
+    }
+    return (GPIO_INPUT_PIN_LOW);
+}
 
 //*****************************************************************************
 //
